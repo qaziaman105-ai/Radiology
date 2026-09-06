@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radiology Department Daily Work Register</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 10px; color: #333; }
+        .container { max-width: 100%; margin: auto; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #007bff; margin-bottom: 15px; }
+        
+        form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; background: #eef2f7; padding: 15px; border-radius: 8px; }
+        
+        label { font-weight: bold; font-size: 13px; display: block; margin-bottom: 3px; color: #444; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; box-sizing: border-box; }
+        
+        .btn-container { grid-column: 1 / -1; text-align: center; margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-size: 14px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #0056b3; }
+        .print-btn { background-color: #28a745; }
+        .print-btn:hover { background-color: #218838; }
+        .excel-btn { background-color: #17a2b8; }
+        .excel-btn:hover { background-color: #138496; }
+        .del-btn { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        .del-btn:hover { background-color: #c82333; }
+
+        .table-responsive { width: 100%; overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; font-size: 12px; }
+        th { background-color: #007bff; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; border: none; padding: 0; }
+            form, .no-print, .action-col { display: none; }
+            table { font-size: 10px; }
+            th, td { padding: 4px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Radiology Department - Daily Work Register</h2>
+
+    <form id="radForm" onsubmit="addRecord(event)">
+        <div>
+            <label>Sr. No:</label>
+            <input type="text" id="srNo" required placeholder="e.g. 01">
+        </div>
+        <div>
+            <label>Monthly No:</label>
+            <input type="text" id="mNo" required placeholder="Monthly No">
+        </div>
+        <div>
+            <label>Yearly No:</label>
+            <input type="text" id="yNo" required placeholder="Yearly No">
+        </div>
+        <div>
+            <label>MR No:</label>
+            <input type="text" id="mrNo" required placeholder="MR Number">
+        </div>
+        <div>
+            <label>Patient Name:</label>
+            <input type="text" id="pName" required placeholder="Patient Name">
+        </div>
+        <div>
+            <label>Age:</label>
+            <input type="text" id="pAge" required placeholder="Age">
+        </div>
+        <div>
+            <label>Test Name:</label>
+            <input type="text" id="testName" required placeholder="e.g. X-Ray Chest">
+        </div>
+        <div>
+            <label>Referred By (Doctor):</label>
+            <input type="text" id="docName" required placeholder="Doctor Name">
+        </div>
+        <div>
+            <label>Time In:</label>
+            <input type="time" id="timeIn" required>
+        </div>
+        <div>
+            <label>Time Out:</label>
+            <input type="time" id="timeOut" required>
+        </div>
+        <div>
+            <label>Grading:</label>
+            <input type="text" id="grading" placeholder="Grading">
+        </div>
+        <div>
+            <label>Film Size:</label>
+            <select id="filmSize">
+                <option value="8x10">8 x 10</option>
+                <option value="10x12">10 x 12</option>
+                <option value="11x14">11 x 14</option>
+                <option value="14x14">14 x 14</option>
+                <option value="14x17">14 x 17</option>
+                <option value="A4">A4</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <div>
+            <label>Free / Paid:</label>
+            <select id="isFree">
+                <option value="No">Paid</option>
+                <option value="Yes">Free</option>
+            </select>
+        </div>
+        <div>
+            <label>Performed By:</label>
+            <input type="text" id="perfBy" required placeholder="Technologist Name">
+        </div>
+
+        <div class="btn-container">
+            <button type="submit">Save Record</button>
+            <button type="button" class="print-btn no-print" onclick="window.print()">Print Register</button>
+            <button type="button" class="excel-btn no-print" onclick="exportToExcel()">Download Excel</button>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Sr.</th>
+                    <th>Monthly No</th>
+                    <th>Yearly No</th>
+                    <th>MR No</th>
+                    <th>Patient Name</th>
+                    <th>Age</th>
+                    <th>Test</th>
+                    <th>Referred By</th>
+                    <th>Time In</th>
+                    <th>Time Out</th>
+                    <th>Grading</th>
+                    <th>Film Size</th>
+                    <th>Free</th>
+                    <th>Performed By</th>
+                    <th class="action-col no-print">Action</th>
+                </tr>
+            </thead>
+            <tbody id="recordTable">
+                <!-- Data will load here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", loadRecords);
+
+    function addRecord(e) {
+        e.preventDefault();
+
+        const data = {
+            srNo: document.getElementById('srNo').value,
+            mNo: document.getElementById('mNo').value,
+            yNo: document.getElementById('yNo').value,
+            mrNo: document.getElementById('mrNo').value,
+            pName: document.getElementById('pName').value,
+            pAge: document.getElementById('pAge').value,
+            testName: document.getElementById('testName').value,
+            docName: document.getElementById('docName').value,
+            timeIn: document.getElementById('timeIn').value,
+            timeOut: document.getElementById('timeOut').value,
+            grading: document.getElementById('grading').value,
+            filmSize: document.getElementById('filmSize').value,
+            isFree: document.getElementById('isFree').value,
+            perfBy: document.getElementById('perfBy').value
+        };
+
+        let records = JSON.parse(localStorage.getItem('radiologyRecords')) || [];
+        records.push(data);
+        localStorage.setItem('radiologyRecords', JSON.stringify(records));
+
+        loadRecords();
+        document.getElementById('radForm').reset();
+    }
+
+    function loadRecords() {
+        const tbody = document.getElementById('recordTable');
+        tbody.innerHTML = '';
+        
+        let records = JSON.parse(localStorage.getItem('radiologyRecords')) || [];
+
+        records.forEach((item, index) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${item.srNo}</td>
+                    <td>${item.mNo}</td>
+                    <td>${item.yNo}</td>
+                    <td>${item.mrNo}</td>
+                    <td>${item.pName}</td>
+                    <td>${item.pAge}</td>
+                    <td>${item.testName}</td>
+                    <td>${item.docName}</td>
+                    <td>${item.timeIn}</td>
+                    <td>${item.timeOut}</td>
+                    <td>${item.grading}</td>
+                    <td>${item.filmSize}</td>
+                    <td>${item.isFree}</td>
+                    <td>${item.perfBy}</td>
+                    <td class="action-col no-print"><button class="del-btn" onclick="deleteRecord(${index})">Delete</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    function deleteRecord(index) {
+        if (confirm('Are you sure you want to delete this record?')) {
+            let records = JSON.parse(localStorage.getItem('radiologyRecords')) || [];
+            records.splice(index, 1);
+            localStorage.setItem('radiologyRecords', JSON.stringify(records));
+            loadRecords();
+        }
+    }
+
+    function exportToExcel() {
+        let records = JSON.parse(localStorage.getItem('radiologyRecords')) || [];
+        if (records.length === 0) {
+            alert('Please add some records first!');
+            return;
+        }
+
+        let csvContent = "\ufeffSr.,Monthly No,Yearly No,MR No,Patient Name,Age,Test,Referred By,Time In,Time Out,Grading,Film Size,Free,Performed By\n";
+
+        records.forEach(item => {
+            let row = [
+                item.srNo,
+                item.mNo,
+                item.yNo,
+                item.mrNo,
+                `"${item.pName}"`,
+                `"${item.pAge}"`,
+                `"${item.testName}"`,
+                `"${item.docName}"`,
+                item.timeIn,
+                item.timeOut,
+                `"${item.grading}"`,
+                item.filmSize,
+                item.isFree,
+                `"${item.perfBy}"`
+            ];
+            csvContent += row.join(",") + "\n";
+        });
+
+        let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = 'Radiology_Register.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+</script>
+
+</body>
+</html>
