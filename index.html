@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ur" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radiology Department - DHQ Hospital Khushab</title>
+    <!-- jsPDF اور AutoTable کی لائبریریاں -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #1e3a8a;
+            --secondary-color: #0284c7;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #cbd5e1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+        }
+
+        /* پاس ورڈ سکرین */
+        #authOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+        .auth-box {
+            background: var(--card-bg);
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 320px;
+            border-top: 5px solid var(--primary-color);
+        }
+        .auth-box h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            font-size: 20px;
+        }
+        .auth-box input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 16px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        .auth-box button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .auth-box button:hover {
+            background-color: #172554;
+        }
+        .error-msg {
+            color: #dc2626;
+            font-size: 13px;
+            margin-top: 12px;
+            display: none;
+            font-weight: 600;
+        }
+
+        /* مین ایپ کنٹینر */
+        .container {
+            max-width: 1350px;
+            margin: auto;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            display: none;
+        }
+
+        /* ہیڈر ڈیزائن */
+        .app-header {
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .app-header h2 {
+            margin: 0 0 5px 0;
+            color: var(--primary-color);
+            font-size: 24px;
+            letter-spacing: 0.5px;
+        }
+        .app-header p {
+            margin: 0;
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* ان پٹ فارم سیکشن */
+        .form-section {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border: 1px solid #e2e8f0;
+        }
+        .form-section h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            font-size: 16px;
+            border-left: 4px solid var(--secondary-color);
+            padding-left: 8px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #475569;
+            text-transform: uppercase;
+        }
+        input, select {
+            padding: 9px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fff;
+            color: var(--text-color);
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+        }
+        .date-container {
+            display: flex;
+            gap: 6px;
+        }
+        .date-container input {
+            flex: 1;
+        }
+        .btn-today {
+            background-color: #64748b;
+            color: white;
+            border: none;
+            padding: 0 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn-today:hover {
+            background-color: #475569;
+        }
+        .btn-submit {
+            grid-column: 1 / -1;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 5px;
+        }
+        .btn-submit:hover {
+            background-color: #172554;
+        }
+
+        /* ایکشن بٹنز (پرنٹ، ایکسل، پی ڈی ایف) */
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .btn-action {
+            padding: 9px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.2s;
+        }
+        .btn-action:hover { opacity: 0.9; }
+        .btn-print { background-color: #0d9488; }
+        .btn-excel { background-color: #16a34a; }
+        .btn-pdf { background-color: #dc2626; }
+
+        /* ٹیبل ڈیزائن */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap;
+            background: white;
+        }
+        th, td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #e2e8f0;
+            border-right: 1px solid #f1f5f9;
+            text-align: center;
+            font-size: 13px;
+        }
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        tr:hover { background-color: #f1f5f9; }
+
+        /* بیجز (Paid / Free) */
+        .badge-paid {
+            background-color: #dcfce7;
+            color: #166534;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .badge-free {
+            background-color: #fef9c3;
+            color: #854d0e;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        /* پرنٹ میڈیا سیٹنگ */
+        @media print {
+            .form-section, .action-buttons, .btn-today {
+                display: none !important;
+            }
+            body { background-color: white; padding: 0; }
+            .container { box-shadow: none; padding: 0; display: block !important; }
+            .app-header { border-bottom: 2px solid #000; margin-bottom: 15px; }
+            th { background-color: #000 !important; color: white !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- پاس ورڈ سکرین -->
+<div id="authOverlay">
+    <div class="auth-box">
+        <h3>DHQ Hospital Khushab</h3>
+        <p style="font-size: 13px; color: #64748b; margin-top: -10px; margin-bottom: 15px;">Radiology Department Portal</p>
+        <input type="password" id="passInput" placeholder="پاس ورڈ درج کریں">
+        <button onclick="checkPassword()">لاگ ان کریں</button>
+        <div id="errorMsg" class="error-msg">غلط پاس ورڈ! دوبارہ کوشش کریں۔</div>
+    </div>
+</div>
+
+<!-- مین پروجیکٹ کنٹینر -->
+<div class="container" id="mainContainer">
+    <div class="app-header">
+        <h2>DHQ Hospital Khushab (Jauharabad)</h2>
+        <p>Radiology Department - Daily Patient Performance & Record Management System</p>
+    </div>
+
+    <!-- Data Input Form -->
+    <div class="form-section">
+        <h3>نیا ریکارڈ درج کریں</h3>
+        <form id="recordForm" class="form-grid">
+            <div class="form-group">
+                <label>Date</label>
+                <div class="date-container">
+                    <input type="text" id="date" placeholder="12-Sep-2026" required>
+                    <button type="button" class="btn-today" onclick="setTodayDate()" title="آج کی تاریخ درج کریں">آج</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>S#</label>
+                <input type="text" id="sNo" placeholder="01" required>
+            </div>
+            <div class="form-group">
+                <label>Monthly#</label>
+                <input type="text" id="monthlyNo" placeholder="001" required>
+            </div>
+            <div class="form-group">
+                <label>Yearly No</label>
+                <input type="text" id="yearlyNo" placeholder="2026-0001" required>
+            </div>
+            <div class="form-group">
+                <label>MR#</label>
+                <input type="text" id="mrNo" placeholder="45892" required>
+            </div>
+            <div class="form-group">
+                <label>Patient Name</label>
+                <input type="text" id="pName" placeholder="مریض کا نام" required>
+            </div>
+            <div class="form-group">
+                <label>Age</label>
+                <input type="text" id="age" placeholder="عمر" required>
+            </div>
+            <div class="form-group">
+                <label>Radiology Test</label>
+                <input type="text" id="testName" placeholder="X-Ray / Ultrasound" required>
+            </div>
+            <div class="form-group">
+                <label>Dr Name</label>
+                <input type="text" id="drName" placeholder="ڈاکٹر کا نام" required>
+            </div>
+            <div class="form-group">
+                <label>Time In</label>
+                <input type="text" id="timeIn" placeholder="09:15 AM" required>
+            </div>
+            <div class="form-group">
+                <label>Time Out</label>
+                <input type="text" id="timeOut" placeholder="09:30 AM" required>
+            </div>
+            <div class="form-group">
+                <label>Film Size</label>
+                <select id="filmSize">
+                    <option value="Nil">Nil</option>
+                    <option value="8x10">8x10</option>
+                    <option value="10x14">10x14</option>
+                    <option value="A-4">A-4</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Paid / Free</label>
+                <select id="paidFree">
+                    <option value="Paid">Paid</option>
+                    <option value="Free">Free</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Perform By</label>
+                <input type="text" id="performBy" value="امان اللہ" required>
+            </div>
+            <button type="submit" class="btn-submit">ریکارڈ محفوظ کریں (Add Record)</button>
+        </form>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <button type="button" class="btn-action btn-print" onclick="window.print()">🖨️ پرنٹ کریں</button>
+        <button type="button" class="btn-action btn-excel" onclick="exportToExcel()">📊 ایکسل میں محفوظ کریں</button>
+        <button type="button" class="btn-action btn-pdf" onclick="exportToPDF()">📄 PDF ڈاؤن لوڈ کریں</button>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-responsive">
+        <table id="recordTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>S#</th>
+                    <th>Monthly#</th>
+                    <th>Yearly No</th>
+                    <th>MR#</th>
+                    <th>Patient Name</th>
+                    <th>Age</th>
+                    <th>Radiology Test</th>
+                    <th>Dr Name</th>
+                    <th>Time In</th>
+                    <th>Time Out</th>
+                    <th>Film Size</th>
+                    <th>Paid/Free</th>
+                    <th>Perform By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- ڈیٹا یہاں شو ہوگا -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const correctPassword = "1234";
+
+    function checkPassword() {
+        let enteredPass = document.getElementById('passInput').value;
+        if (enteredPass === correctPassword) {
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'block';
+        } else {
+            document.getElementById('errorMsg').style.display = 'block';
+            document.getElementById('passInput').value = '';
+        }
+    }
+
+    document.getElementById('passInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            checkPassword();
+        }
+    });
+
+    function setTodayDate() {
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const today = new Date();
+        let day = String(today.getDate()).padStart(2, '0');
+        let month = months[today.getMonth()];
+        let year = today.getFullYear();
+        document.getElementById('date').value = `${day}-${month}-${year}`;
+    }
+
+    document.getElementById('recordForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        let date = document.getElementById('date').value;
+        let sNo = document.getElementById('sNo').value;
+        let monthlyNo = document.getElementById('monthlyNo').value;
+        let yearlyNo = document.getElementById('yearlyNo').value;
+        let mrNo = document.getElementById('mrNo').value;
+        let pName = document.getElementById('pName').value;
+        let age = document.getElementById('age').value;
+        let testName = document.getElementById('testName').value;
+        let drName = document.getElementById('drName').value;
+        let timeIn = document.getElementById('timeIn').value;
+        let timeOut = document.getElementById('timeOut').value;
+        let filmSize = document.getElementById('filmSize').value;
+        let paidFree = document.getElementById('paidFree').value;
+        let performBy = document.getElementById('performBy').value;
+
+        let badgeClass = paidFree === 'Paid' ? 'badge-paid' : 'badge-free';
+        let paidFreeHtml = `<span class="${badgeClass}">${paidFree}</span>`;
+
+        let tableRef = document.getElementById('recordTable').getElementsByTagName('tbody')[0];
+        let newRow = tableRef.insertRow();
+
+        newRow.innerHTML = `
+            <td>${date}</td>
+            <td>${sNo}</td>
+            <td>${monthlyNo}</td>
+            <td>${yearlyNo}</td>
+            <td>${mrNo}</td>
+            <td>${pName}</td>
+            <td>${age}</td>
+            <td>${testName}</td>
+            <td>${drName}</td>
+            <td>${timeIn}</td>
+            <td>${timeOut}</td>
+            <td>${filmSize}</td>
+            <td>${paidFreeHtml}</td>
+            <td>${performBy}</td>
+        `;
+
+        document.getElementById('recordForm').reset();
+        document.getElementById('performBy').value = "امان اللہ";
+    });
+
+    function exportToExcel() {
+        let table = document.getElementById("recordTable");
+        let rows = table.rows;
+        if (rows.length <= 1) {
+            alert("براہ کرم پہلے کچھ ریکارڈ درج کریں!");
+            return;
+        }
+
+        let csv = [];
+        for (let i = 0; i < rows.length; i++) {
+            let row = [], cols = rows[i].querySelectorAll("th, td");
+            for (let j = 0; j < cols.length; j++) {
+                let text = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/"/g, '""');
+                row.push('"' + text + '"');
+            }
+            csv.push(row.join(","));
+        }
+
+        let csvFile = new Blob([csv.join("\n")], { type: "text/csv;charset=utf-8;" });
+        let downloadLink = document.createElement("a");
+        downloadLink.download = "DHQ_Radiology_Record.csv";
+        downloadLink.href = window.URL.createObjectURL(csvFile);
+        downloadLink.style.display = "none";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    }
+
+    function exportToPDF() {
+        const { jsPDF } = window.jspdf;
+        let doc = new jsPDF('landscape');
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.text("DHQ Hospital Khushab - Radiology Department", 14, 12);
+        
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.text("Daily Patient Performance Record", 14, 18);
+
+        let table = document.getElementById("recordTable");
+        if (table.rows.length <= 1) {
+            alert("براہ کرم پہلے کچھ ریکارڈ درج کریں!");
+            return;
+        }
+
+        doc.autoTable({
+            html: '#recordTable',
+            startY: 24,
+            theme: 'grid',
+            styles: { fontSize: 8, halign: 'center', cellPadding: 4 },
+            headStyles: { fillColor: [30, 58, 138] }
+        });
+
+        doc.save("DHQ_Radiology_Record.pdf");
+    }
+</script>
+
+</body>
+</html>
